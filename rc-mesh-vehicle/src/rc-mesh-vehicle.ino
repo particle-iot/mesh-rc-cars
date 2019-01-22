@@ -23,10 +23,10 @@ int rightReverse = A3;
 
 // Speed and delay variables
 int speed = 85;
-int turnSpeed = speed + 40;
-int forwardDelay = 500;
-int backDelay = 750;
-int turnDelay = 1250;
+int turnSpeed = 255;
+int forwardDelay = 1000;
+int backDelay = 1000;
+int turnDelay = 2000;
 String version = "v0.7";
 
 void setup()
@@ -62,10 +62,8 @@ void runDemo(const char *event, const char *data)
   goBack(speed);
   delay(backDelay);
 
+  // Max spin to raise up on back tires
   turnLeft(turnSpeed);
-  delay(turnDelay);
-
-  turnRight(turnSpeed);
   delay(turnDelay);
 
   allOff();
