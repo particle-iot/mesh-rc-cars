@@ -27,7 +27,7 @@ int turnSpeed = 255;
 int forwardDelay = 1000;
 int backDelay = 1000;
 int turnDelay = 2000;
-String version = "v0.7";
+String version = "v0.8";
 
 void setup()
 {
