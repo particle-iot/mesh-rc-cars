@@ -9,11 +9,10 @@ Firmware for mesh-networked RC cars. Includes standalone projects for the follow
 - `rc-mesh-controller` - Gateway controller firmware (Surfaces a `Particle.function` that can be called via the console or mobile device).
 - `rc-mesh-vehicle` - End device firmware that listens for a mesh event (via `Mesh.subscribe`) and triggers a pre-defined sequence of movements.
 
-### 2. [Under development] Swarm with RC-powered Leader
+### 2. ✅ Swarm with RC-powered Leader - Uses the remote control to control a leader car; leader car sends instructions to followers via Mesh events.
 
-- `rc-swarm-controller`
-- `rc-swarm-leader`
-- `rc-swarm-follower`
+- `rc-swarm-leader` - Reads voltages sent to the car via the remote control and uses `Mesh.publish` to send those to all listeners.
+- `rc-swarm-follower` - Listens for leader messages via `Mesh.subscribe` and sets the voltage on a corresponding pin.
 
 ### 3. [Coming soon] Swarm sequences
 
