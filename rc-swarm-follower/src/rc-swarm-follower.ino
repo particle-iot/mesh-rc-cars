@@ -1,8 +1,9 @@
 /*
  * Project rc-swarm-follower
- * Description:
- * Author:
- * Date:
+ * Description: Swarm bot demo with leader RC car controlled by RC remote. Follower cars obey Mesh commands to 
+ *   move along with leader car
+ * Author: Brandon Satrom <brandon@particle.io>
+ * Date: 1/30/2019
  */
 
 /* Connections to Thunder Tumbler PCB 
@@ -23,7 +24,7 @@ int rightReverse = A3;
 
 int speed = 85;
 
-String version = "v0.8";
+String version = "v1.0";
 
 void setup()
 {

@@ -1,6 +1,9 @@
 .vscode
 *.code-workspace
 
+# comple directories
+*/target/
+
 # Prerequisites
 *.d
 

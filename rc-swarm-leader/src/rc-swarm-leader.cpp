@@ -2,9 +2,10 @@
 #line 1 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-leader/src/rc-swarm-leader.ino"
 /*
  * Project rc-swarm-leader
- * Description:
- * Author:
- * Date:
+ * Description: Swarm bot demo with leader RC car controlled by RC remote. Follower cars obey Mesh commands to 
+ *   move along with leader car
+ * Author: Brandon Satrom <brandon@particle.io>
+ * Date: 1/30/2019
  */
 
 /* Connections to Thunder Tumbler PCB 
@@ -19,113 +20,51 @@
 
 // Wheel pin mappings
 void setup();
-int stop(String args);
-void off();
-void allOff();
-int goForward(String args);
-void forward();
-int goBack(String args);
-void back();
 void loop();
-#line 19 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-leader/src/rc-swarm-leader.ino"
+void checkPin(int pin, int32_t *lastVal, const char *event);
+#line 20 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-leader/src/rc-swarm-leader.ino"
 int leftReverse = A0;
 int leftForward = A1;
 int rightForward = A2;
 int rightReverse = A3;
 
-int speed = 85;
-int lastLeftRVal = 0;
-String version = "v0.8";
+int32_t lastLeftRVal = 0;
+int32_t lastLeftFVal = 0;
+int32_t lastRightRVal = 0;
+int32_t lastRightFVal = 0;
+
+String version = "v1.0";
 
 void setup()
 {
-  pinMode(leftReverse, OUTPUT);
-  pinMode(leftForward, OUTPUT);
-  pinMode(rightForward, OUTPUT);
-  pinMode(rightReverse, OUTPUT);
+  Serial.begin(9600);
 
-  digitalWrite(leftReverse, LOW);
-  digitalWrite(leftForward, LOW);
-  digitalWrite(rightForward, LOW);
-  digitalWrite(rightReverse, LOW);
+  pinMode(leftReverse, INPUT);
+  pinMode(leftForward, INPUT);
+  pinMode(rightForward, INPUT);
+  pinMode(rightReverse, INPUT);
 
   Particle.publish("swarm-leader-online", version);
   Particle.variable("fw-version", version);
-
-  Particle.function("forward", goForward);
-  Particle.function("back", goBack);
-  Particle.function("stop", stop);
-}
-
-int stop(String args)
-{
-  off();
-
-  return 1;
-}
-
-void off()
-{
-  Mesh.publish("allOff", NULL);
-}
-
-void allOff()
-{
-  analogWrite(leftReverse, 0);
-  analogWrite(leftForward, 0);
-  analogWrite(rightForward, 0);
-  analogWrite(rightReverse, 0);
-}
-
-int goForward(String args)
-{
-  off();
-
-  Mesh.publish("goForward", NULL);
-  forward();
-
-  return 1;
-}
-
-void forward()
-{
-  analogWrite(rightForward, speed);
-  analogWrite(leftForward, speed);
-
-  delay(1000);
-
-  allOff();
-}
-
-int goBack(String args)
-{
-  off();
-
-  Mesh.publish("goBack", NULL);
-  back();
-
-  return 1;
-}
-
-void back()
-{
-  analogWrite(rightReverse, speed);
-  analogWrite(leftReverse, speed);
-
-  delay(1000);
-
-  allOff();
 }
 
 void loop()
 {
-  /*int leftRVal = analogRead(leftReverse);
+  checkPin(leftReverse, &lastLeftRVal, "leftR");
+  checkPin(leftForward, &lastLeftFVal, "leftF");
+  checkPin(rightReverse, &lastRightRVal, "rightR");
+  checkPin(rightForward, &lastRightFVal, "rightF");
+}
 
-  if (leftRVal != lastLeftRVal)
+void checkPin(int pin, int32_t *lastVal, const char *event)
+{
+  int32_t pinVal = analogRead(pin) / 16;
+
+  if (pinVal != *lastVal && pinVal > 1)
   {
-    lastLeftRVal = leftRVal;
+    *lastVal = pinVal;
 
-    Mesh.publish("leftR", String(leftRVal));
-    Particle.publish("leftR", String(leftRVal));
-  }*/
+    Mesh.publish(event, String(pinVal));
+    Serial.printlnf("%s Val: %i", event, pinVal);
+  }
 }
