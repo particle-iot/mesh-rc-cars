@@ -2,9 +2,10 @@
 #line 1 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-follower/src/rc-swarm-follower.ino"
 /*
  * Project rc-swarm-follower
- * Description:
- * Author:
- * Date:
+ * Description: Swarm bot demo with leader RC car controlled by RC remote. Follower cars obey Mesh commands to 
+ *   move along with leader car
+ * Author: Brandon Satrom <brandon@particle.io>
+ * Date: 1/30/2019
  */
 
 /* Connections to Thunder Tumbler PCB 
@@ -19,26 +20,35 @@
 
 // Wheel pin mappings
 void setup();
-void goForward(const char *event, const char *data);
-void goBack(const char *event, const char *data);
-void allOff();
+void leftR(const char *event, const char *data);
+void leftF(const char *event, const char *data);
+void rightR(const char *event, const char *data);
+void rightF(const char *event, const char *data);
+void move(int pin, const char *speed);
 void loop();
-#line 19 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-follower/src/rc-swarm-follower.ino"
-int leftReverse = A0;
-int leftForward = A1;
-int rightForward = A2;
-int rightReverse = A3;
+#line 20 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-follower/src/rc-swarm-follower.ino"
+int32_t leftReverse = A0;
+int32_t leftForward = A1;
+int32_t rightForward = A2;
+int32_t rightReverse = A3;
 
-int speed = 85;
+#define RESOLUTION 12
 
-String version = "v0.8";
+String version = "v1.0";
 
 void setup()
 {
+  Serial.begin(9600);
+
   pinMode(leftReverse, OUTPUT);
   pinMode(leftForward, OUTPUT);
   pinMode(rightForward, OUTPUT);
   pinMode(rightReverse, OUTPUT);
+
+  analogWriteResolution(leftReverse, RESOLUTION);
+  analogWriteResolution(leftForward, RESOLUTION);
+  analogWriteResolution(rightForward, RESOLUTION);
+  analogWriteResolution(rightReverse, RESOLUTION);
 
   digitalWrite(leftReverse, LOW);
   digitalWrite(leftForward, LOW);
@@ -48,40 +58,49 @@ void setup()
   Particle.publish("swarm-follower-online", version);
   Particle.variable("fw-version", version);
 
-  Mesh.subscribe("goForward", goForward);
-  Mesh.subscribe("goBack", goBack);
+  Mesh.subscribe("leftR", leftR);
+  Mesh.subscribe("leftF", leftF);
+  Mesh.subscribe("rightR", rightR);
+  Mesh.subscribe("rightF", rightF);
 }
 
-void goForward(const char *event, const char *data)
+void leftR(const char *event, const char *data)
 {
-  analogWrite(rightForward, speed);
-  analogWrite(leftForward, speed);
-
-  delay(1000);
-
-  allOff();
+  move(leftReverse, data);
 }
 
-void goBack(const char *event, const char *data)
+void leftF(const char *event, const char *data)
 {
-  analogWrite(rightReverse, speed);
-  analogWrite(leftReverse, speed);
-
-  delay(1000);
-
-  allOff();
+  move(leftForward, data);
 }
 
-void allOff()
+void rightR(const char *event, const char *data)
 {
-  analogWrite(leftReverse, 0);
-  analogWrite(leftForward, 0);
-  analogWrite(rightForward, 0);
-  analogWrite(rightReverse, 0);
+  move(rightReverse, data);
+}
 
-  delay(50);
+void rightF(const char *event, const char *data)
+{
+  move(rightForward, data);
+}
+
+void move(int pin, const char *speed)
+{
+  int32_t speedVal = atoi(speed);
+
+  if (speedVal > 16)
+  {
+    analogWrite(pin, speedVal);
+
+    Serial.printlnf("%i Val: %i", pin, speedVal);
+  }
+  else
+  {
+    analogWrite(pin, 0);
+  }
 }
 
 void loop()
 {
+  // Nothing to see here. Just doing what the leader tells us to do
 }

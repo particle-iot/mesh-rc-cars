@@ -52,9 +52,9 @@ void loop()
 
 void checkPin(int pin, int32_t *lastVal, const char *event)
 {
-  int32_t pinVal = analogRead(pin) / 16;
+  int32_t pinVal = analogRead(pin);
 
-  if (pinVal != *lastVal && pinVal > 1)
+  if (pinVal != *lastVal)
   {
     *lastVal = pinVal;
 
