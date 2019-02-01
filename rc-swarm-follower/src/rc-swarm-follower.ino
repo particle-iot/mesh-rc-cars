@@ -28,17 +28,10 @@ String version = "v1.0";
 
 void setup()
 {
-  Serial.begin(9600);
-
   pinMode(leftReverse, OUTPUT);
   pinMode(leftForward, OUTPUT);
   pinMode(rightForward, OUTPUT);
   pinMode(rightReverse, OUTPUT);
-
-  analogWriteResolution(leftReverse, RESOLUTION);
-  analogWriteResolution(leftForward, RESOLUTION);
-  analogWriteResolution(rightForward, RESOLUTION);
-  analogWriteResolution(rightReverse, RESOLUTION);
 
   digitalWrite(leftReverse, LOW);
   digitalWrite(leftForward, LOW);

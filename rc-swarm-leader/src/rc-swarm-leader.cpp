@@ -33,6 +33,9 @@ int32_t lastLeftFVal = 0;
 int32_t lastRightRVal = 0;
 int32_t lastRightFVal = 0;
 
+#define MIN_PIN_VAL 150
+#define DRIVE_VAL 200
+
 String version = "v1.0";
 
 void setup()
@@ -58,13 +61,23 @@ void loop()
 
 void checkPin(int pin, int32_t *lastVal, const char *event)
 {
-  int32_t pinVal = analogRead(pin);
+  int32_t pinVal = analogRead(pin) / 16;
+  
+  if (pinVal > MIN_PIN_VAL)
+    pinVal = DRIVE_VAL;
+  else
+    pinVal = 0;
 
-  if (pinVal != *lastVal)
+  if (pinVal != *lastVal && pinVal == DRIVE_VAL)
   {
     *lastVal = pinVal;
 
-    Mesh.publish(event, String(pinVal));
-    Serial.printlnf("%s Val: %i", event, pinVal);
+    Mesh.publish(event, String(DRIVE_VAL));
+    Serial.printlnf("%s val: %i", event, DRIVE_VAL);
+  } else if (pinVal == 0 && *lastVal != 0) {
+    *lastVal = 0;
+    
+    Mesh.publish(event, String(0));
+    Serial.printlnf("%s val: %i", event, 0);
   }
 }
