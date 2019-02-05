@@ -23,14 +23,17 @@ void setup();
 void loop();
 int swarmDemo(String args);
 int switchSwarmMode(String args);
-void checkPin(int pin, int32_t *lastVal, const char *event);
 void followTheLeader();
-void motorsOff(int32_t del);
+void spinCars();
 void moveForward(int32_t val, int32_t del);
 void moveBack(int32_t val, int32_t del);
 void turnRight90();
 void turnLeft90();
+void spinLeft360();
+void spinRight360();
+void motorsOff(int32_t del);
 void allOff();
+void checkPin(int pin, int32_t *lastVal, const char *event);
 String *getArgs(String args);
 #line 20 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-leader/src/rc-swarm-leader.ino"
 int32_t leftReverse = A0;
@@ -47,15 +50,19 @@ const int32_t RC_MODE = 1;
 const int32_t DEMO_MODE = 2;
 
 #define MIN_PIN_VAL 150
-#define DRIVE_VAL 200
-#define MAX_VAL 255
+#define DRIVE_VAL 125
+#define SENTRY_VAL 90
+#define MAX_VAL 200
 
 #define WIDE_TURN_DELAY 1650
-#define TIGHT_TURN_DELAY 350
+#define TIGHT_TURN_DELAY 450
+#define SPIN_DELAY 500
 
-String version = "v1.1";
+String version = "v1.2";
 int32_t mode = RC_MODE;
 int32_t overrideDelay = 0;
+
+/* MAIN Firmware Functions */
 
 void setup()
 {
@@ -87,6 +94,8 @@ void loop()
   }
 }
 
+/* MODE CONTROL */
+
 int swarmDemo(String args)
 {
   if (mode == RC_MODE)
@@ -94,12 +103,17 @@ int swarmDemo(String args)
 
   String *argVals = getArgs(args);
 
+  // Can be run with adjustable delays to test without recompiling
+  overrideDelay = argVals[1].toInt();
+
   if (argVals[0] == "follow")
   {
     // Run follow the leader demo
-    // Can be run with adjustable delays to test without recompiling
-    overrideDelay = argVals[1].toInt();
     followTheLeader();
+  }
+  else if (argVals[0] == "spin")
+  {
+    spinCars();
   }
 
   return 1;
@@ -115,10 +129,10 @@ int switchSwarmMode(String args)
     {
       mode = RC_MODE;
 
-      pinMode(leftReverse, OUTPUT);
-      pinMode(leftForward, OUTPUT);
-      pinMode(rightForward, OUTPUT);
-      pinMode(rightReverse, OUTPUT);
+      pinMode(leftReverse, INPUT);
+      pinMode(leftForward, INPUT);
+      pinMode(rightForward, INPUT);
+      pinMode(rightReverse, INPUT);
     }
     else if (args == "demo")
     {
@@ -141,40 +155,16 @@ int switchSwarmMode(String args)
   return 1;
 }
 
-void checkPin(int pin, int32_t *lastVal, const char *event)
-{
-  int32_t pinVal = analogRead(pin) / 16;
-
-  if (pinVal > MIN_PIN_VAL)
-    pinVal = DRIVE_VAL;
-  else
-    pinVal = 0;
-
-  if (pinVal != *lastVal && pinVal == DRIVE_VAL)
-  {
-    *lastVal = pinVal;
-
-    Mesh.publish(event, String(DRIVE_VAL));
-    Serial.printlnf("%s val: %i", event, DRIVE_VAL);
-  }
-  else if (pinVal == 0 && *lastVal != 0)
-  {
-    *lastVal = 0;
-
-    Mesh.publish(event, String(0));
-    Serial.printlnf("%s val: %i", event, 0);
-  }
-}
+/* SEQUENCES */
 
 void followTheLeader()
 {
-  //Move forward, and accelerate at the end
-  moveForward(DRIVE_VAL, 600);
-  moveForward(MAX_VAL, 400);
+  //Move forward,
+  moveForward(DRIVE_VAL, 800);
   motorsOff(1000);
 
   //Move back to start
-  moveBack(DRIVE_VAL, 1200);
+  moveBack(DRIVE_VAL, 800);
   motorsOff(1000);
 
   turnRight90();
@@ -184,13 +174,13 @@ void followTheLeader()
   motorsOff(10);
 }
 
-void motorsOff(int32_t del)
+void spinCars()
 {
-  Mesh.publish("allOff", NULL);
-  allOff();
-
-  delay(del);
+  spinLeft360();
+  motorsOff(500);
 }
+
+/* PRIMITIVES */
 
 void moveForward(int32_t val, int32_t del)
 {
@@ -236,12 +226,60 @@ void turnLeft90()
   delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
 }
 
+void spinLeft360()
+{
+  Mesh.publish("leftR", String(255));
+
+  analogWrite(leftReverse, 255);
+
+  delay(overrideDelay ? overrideDelay : SPIN_DELAY);
+}
+
+void spinRight360() {}
+
+void motorsOff(int32_t del)
+{
+  Mesh.publish("allOff", NULL);
+  allOff();
+
+  delay(del);
+}
+
 void allOff()
 {
   analogWrite(leftReverse, 0);
   analogWrite(leftForward, 0);
   analogWrite(rightReverse, 0);
   analogWrite(rightForward, 0);
+}
+
+/* UTILITIES */
+
+// Check and control when in RC mode where leader is controlling
+// followers via th RC remote.
+void checkPin(int pin, int32_t *lastVal, const char *event)
+{
+  int32_t pinVal = analogRead(pin) / 16;
+
+  if (pinVal > MIN_PIN_VAL)
+    pinVal = DRIVE_VAL;
+  else
+    pinVal = 0;
+
+  if (pinVal != *lastVal && pinVal == DRIVE_VAL)
+  {
+    *lastVal = pinVal;
+
+    Mesh.publish(event, String(DRIVE_VAL));
+    Serial.printlnf("%s val: %i", event, DRIVE_VAL);
+  }
+  else if (pinVal == 0 && *lastVal != 0)
+  {
+    *lastVal = 0;
+
+    Mesh.publish(event, String(0));
+    Serial.printlnf("%s val: %i", event, 0);
+  }
 }
 
 // Utility function to split a Particle function args string into component parts

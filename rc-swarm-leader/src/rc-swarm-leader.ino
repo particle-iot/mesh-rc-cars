@@ -37,16 +37,18 @@ const int32_t DEMO_MODE = 2;
 
 #define WIDE_TURN_DELAY 1650
 #define TIGHT_TURN_DELAY 450
+#define SPIN_DELAY 400
 
-String version = "v1.1";
+String version = "v1.2";
 int32_t mode = RC_MODE;
 int32_t overrideDelay = 0;
+
+/* MAIN Firmware Functions */
 
 void setup()
 {
   Serial.begin(9600);
 
-  // Need to switch this depending on whether we are in RC or Demo Mode
   pinMode(leftReverse, INPUT);
   pinMode(leftForward, INPUT);
   pinMode(rightForward, INPUT);
@@ -72,6 +74,8 @@ void loop()
   }
 }
 
+/* MODE CONTROL */
+
 int swarmDemo(String args)
 {
   if (mode == RC_MODE)
@@ -79,12 +83,17 @@ int swarmDemo(String args)
 
   String *argVals = getArgs(args);
 
+  // Can be run with adjustable delays to test without recompiling
+  overrideDelay = argVals[1].toInt();
+
   if (argVals[0] == "follow")
   {
     // Run follow the leader demo
-    // Can be run with adjustable delays to test without recompiling
-    overrideDelay = argVals[1].toInt();
     followTheLeader();
+  }
+  else if (argVals[0] == "spin")
+  {
+    spinCars();
   }
 
   return 1;
@@ -100,10 +109,10 @@ int switchSwarmMode(String args)
     {
       mode = RC_MODE;
 
-      pinMode(leftReverse, OUTPUT);
-      pinMode(leftForward, OUTPUT);
-      pinMode(rightForward, OUTPUT);
-      pinMode(rightReverse, OUTPUT);
+      pinMode(leftReverse, INPUT);
+      pinMode(leftForward, INPUT);
+      pinMode(rightForward, INPUT);
+      pinMode(rightReverse, INPUT);
     }
     else if (args == "demo")
     {
@@ -126,34 +135,11 @@ int switchSwarmMode(String args)
   return 1;
 }
 
-void checkPin(int pin, int32_t *lastVal, const char *event)
-{
-  int32_t pinVal = analogRead(pin) / 16;
-
-  if (pinVal > MIN_PIN_VAL)
-    pinVal = DRIVE_VAL;
-  else
-    pinVal = 0;
-
-  if (pinVal != *lastVal && pinVal == DRIVE_VAL)
-  {
-    *lastVal = pinVal;
-
-    Mesh.publish(event, String(DRIVE_VAL));
-    Serial.printlnf("%s val: %i", event, DRIVE_VAL);
-  }
-  else if (pinVal == 0 && *lastVal != 0)
-  {
-    *lastVal = 0;
-
-    Mesh.publish(event, String(0));
-    Serial.printlnf("%s val: %i", event, 0);
-  }
-}
+/* SEQUENCES */
 
 void followTheLeader()
 {
-  //Move forward, and accelerate at the end
+  //Move forward,
   moveForward(DRIVE_VAL, 800);
   motorsOff(1000);
 
@@ -168,13 +154,16 @@ void followTheLeader()
   motorsOff(10);
 }
 
-void motorsOff(int32_t del)
+void spinCars()
 {
-  Mesh.publish("allOff", NULL);
-  allOff();
+  spinLeft360();
+  motorsOff(200);
 
-  delay(del);
+  spinRight360();
+  motorsOff(200);
 }
+
+/* PRIMITIVES */
 
 void moveForward(int32_t val, int32_t del)
 {
@@ -220,12 +209,77 @@ void turnLeft90()
   delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
 }
 
+void spinLeft360()
+{
+  moveForward(255, 400);
+  motorsOff(200);
+
+  Mesh.publish("leftR", String(255));
+  Mesh.publish("rightF", String(255));
+
+  analogWrite(leftReverse, 255);
+  analogWrite(rightForward, 255);
+
+  delay(overrideDelay ? overrideDelay : SPIN_DELAY);
+}
+
+void spinRight360()
+{
+  moveForward(255, 400);
+  motorsOff(200);
+
+  Mesh.publish("leftF", String(255));
+  Mesh.publish("rightR", String(255));
+
+  analogWrite(leftForward, 255);
+  analogWrite(rightReverse, 255);
+
+  delay(overrideDelay ? overrideDelay : SPIN_DELAY);
+}
+
+void motorsOff(int32_t del)
+{
+  Mesh.publish("allOff", NULL);
+  allOff();
+
+  delay(del);
+}
+
 void allOff()
 {
   analogWrite(leftReverse, 0);
   analogWrite(leftForward, 0);
   analogWrite(rightReverse, 0);
   analogWrite(rightForward, 0);
+}
+
+/* UTILITIES */
+
+// Check and control when in RC mode where leader is controlling
+// followers via th RC remote.
+void checkPin(int pin, int32_t *lastVal, const char *event)
+{
+  int32_t pinVal = analogRead(pin) / 16;
+
+  if (pinVal > MIN_PIN_VAL)
+    pinVal = DRIVE_VAL;
+  else
+    pinVal = 0;
+
+  if (pinVal != *lastVal && pinVal == DRIVE_VAL)
+  {
+    *lastVal = pinVal;
+
+    Mesh.publish(event, String(DRIVE_VAL));
+    Serial.printlnf("%s val: %i", event, DRIVE_VAL);
+  }
+  else if (pinVal == 0 && *lastVal != 0)
+  {
+    *lastVal = 0;
+
+    Mesh.publish(event, String(0));
+    Serial.printlnf("%s val: %i", event, 0);
+  }
 }
 
 // Utility function to split a Particle function args string into component parts
