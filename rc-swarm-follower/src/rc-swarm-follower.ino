@@ -22,9 +22,7 @@ int32_t leftForward = A1;
 int32_t rightForward = A2;
 int32_t rightReverse = A3;
 
-#define RESOLUTION 12
-
-String version = "v1.0";
+String version = "v1.2";
 
 void setup()
 {
@@ -45,6 +43,7 @@ void setup()
   Mesh.subscribe("leftF", leftF);
   Mesh.subscribe("rightR", rightR);
   Mesh.subscribe("rightF", rightF);
+  Mesh.subscribe("allOff", allOff);
 }
 
 void leftR(const char *event, const char *data)
@@ -67,6 +66,14 @@ void rightF(const char *event, const char *data)
   move(rightForward, data);
 }
 
+void allOff(const char *event, const char *data)
+{
+  analogWrite(leftReverse, 0);
+  analogWrite(leftForward, 0);
+  analogWrite(rightReverse, 0);
+  analogWrite(rightForward, 0);
+}
+
 void move(int pin, const char *speed)
 {
   int32_t speedVal = atoi(speed);
@@ -74,8 +81,6 @@ void move(int pin, const char *speed)
   if (speedVal > 16)
   {
     analogWrite(pin, speedVal);
-
-    Serial.printlnf("%i Val: %i", pin, speedVal);
   }
   else
   {

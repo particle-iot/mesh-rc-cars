@@ -14,9 +14,24 @@ Firmware for mesh-networked RC cars. Includes standalone projects for the follow
 - `rc-swarm-leader` - Reads voltages sent to the car via the remote control and uses `Mesh.publish` to send those to all listeners.
 - `rc-swarm-follower` - Listens for leader messages via `Mesh.subscribe` and sets the voltage on a corresponding pin.
 
-### 3. [Coming soon] Swarm sequences
+### 3. ️☑️ Swarm sequences
 
-- Modification of #2 with pre-arranged sequences
+- Modification of #2 with pre-arranged sequences.
+- `rc-swarm-follower` - Same functionality as #2: continue to respond to Mesh messages to move each motor/wheel.
+- `rc-swarm-leader` - Modified from #2 to include
+  - ✅ Swarm modes - RC Mode (default), Demo Mode
+  - ✅ Function to switch swarm modes
+  - ☑️ Function to trigger swarm demos
+    - ☑️ Follow the leader - basic forward and back demo with ending spin
+    - ️☑️ Splinter - cars separate in three different directions and come back together
+    - ☑️ Follow the leader and push - Leader car tells followers to stop, goes forward 2 seconds, turns around, goes back 2 seconds, then tells followers to move backwards as it keeps moving forward.
+    - ☑️ Sentry mode - Square with right-angle turns
+    - ☑️ Orbit - follower cars orbit a stationary leader car
+  - ☑️ Demo "primitives" that encapsulate car movements
+    - Basic (`forward`, `back`, `circle`)
+    - Turns (`turnRight45`, `turnRight90`, etc.)
+    - Spins (`spin360Left`, `spin360Right`)
+  - ☑️ State Machine to manage pre-arranged sequences
 
 ### 4. [Coming soon] Swarm sequence with collision-detection
 
