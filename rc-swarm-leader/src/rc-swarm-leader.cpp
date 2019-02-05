@@ -21,8 +21,16 @@
 // Wheel pin mappings
 void setup();
 void loop();
+int swarmDemo(String args);
 int switchSwarmMode(String args);
 void checkPin(int pin, int32_t *lastVal, const char *event);
+void followTheLeader();
+void motorsOff(int32_t del);
+void moveForward(int32_t val, int32_t del);
+void moveBack(int32_t val, int32_t del);
+void turnWideRightReverse();
+void turnTightRightReverse();
+void allOff();
 #line 20 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-leader/src/rc-swarm-leader.ino"
 int32_t leftReverse = A0;
 int32_t leftForward = A1;
@@ -39,6 +47,10 @@ const int32_t DEMO_MODE = 2;
 
 #define MIN_PIN_VAL 150
 #define DRIVE_VAL 200
+#define MAX_VAL 255
+
+#define WIDE_TURN_DELAY 1650
+#define TIGHT_TURN_DELAY 500
 
 String version = "v1.1";
 int32_t mode = RC_MODE;
@@ -58,6 +70,7 @@ void setup()
   Particle.variable("swarm-mode", mode);
 
   Particle.function("switchMode", switchSwarmMode);
+  Particle.function("swarmDemo", swarmDemo);
 }
 
 void loop()
@@ -69,6 +82,20 @@ void loop()
     checkPin(rightReverse, &lastRightRVal, "rightR");
     checkPin(rightForward, &lastRightFVal, "rightF");
   }
+}
+
+int swarmDemo(String args)
+{
+  if (mode == RC_MODE)
+    return 0;
+
+  if (args == "follow")
+  {
+    // Run follow the leader demo
+    followTheLeader();
+  }
+
+  return 1;
 }
 
 int switchSwarmMode(String args)
@@ -120,4 +147,68 @@ void checkPin(int pin, int32_t *lastVal, const char *event)
     Mesh.publish(event, String(0));
     Serial.printlnf("%s val: %i", event, 0);
   }
+}
+
+void followTheLeader()
+{
+  // Move forward, and accelerate at the end
+  //moveForward(DRIVE_VAL, 600);
+  //moveForward(MAX_VAL, 300);
+  //motorsOff(1000);
+
+  // move back to start
+  //moveBack(DRIVE_VAL, 1200);
+  //motorsOff(1000);
+
+  turnWideRightReverse();
+  //turnTightRightReverse();
+
+  motorsOff(10);
+}
+
+void motorsOff(int32_t del)
+{
+  Mesh.publish("allOff", NULL);
+  allOff();
+
+  delay(del);
+}
+
+void moveForward(int32_t val, int32_t del)
+{
+  Mesh.publish("leftF", String(val));
+  Mesh.publish("rightF", String(val));
+
+  delay(del);
+}
+
+void moveBack(int32_t val, int32_t del)
+{
+  Mesh.publish("leftR", String(val));
+  Mesh.publish("rightR", String(val));
+
+  delay(del);
+}
+
+void turnWideRightReverse()
+{
+  Mesh.publish("leftR", String(255));
+
+  delay(WIDE_TURN_DELAY);
+}
+
+void turnTightRightReverse()
+{
+  Mesh.publish("leftR", String(255));
+  Mesh.publish("rightF", String(255));
+
+  delay(TIGHT_TURN_DELAY);
+}
+
+void allOff()
+{
+  analogWrite(leftReverse, 0);
+  analogWrite(leftForward, 0);
+  analogWrite(rightReverse, 0);
+  analogWrite(rightForward, 0);
 }
