@@ -28,9 +28,10 @@ void followTheLeader();
 void motorsOff(int32_t del);
 void moveForward(int32_t val, int32_t del);
 void moveBack(int32_t val, int32_t del);
-void turnWideRightReverse();
-void turnTightRightReverse();
+void turnRight90();
+void turnLeft90();
 void allOff();
+String *getArgs(String args);
 #line 20 "/Users/bsatrom/Development/particle/rc-mesh/rc-swarm-leader/src/rc-swarm-leader.ino"
 int32_t leftReverse = A0;
 int32_t leftForward = A1;
@@ -50,15 +51,17 @@ const int32_t DEMO_MODE = 2;
 #define MAX_VAL 255
 
 #define WIDE_TURN_DELAY 1650
-#define TIGHT_TURN_DELAY 500
+#define TIGHT_TURN_DELAY 350
 
 String version = "v1.1";
 int32_t mode = RC_MODE;
+int32_t overrideDelay = 0;
 
 void setup()
 {
   Serial.begin(9600);
 
+  // Need to switch this depending on whether we are in RC or Demo Mode
   pinMode(leftReverse, INPUT);
   pinMode(leftForward, INPUT);
   pinMode(rightForward, INPUT);
@@ -89,9 +92,13 @@ int swarmDemo(String args)
   if (mode == RC_MODE)
     return 0;
 
-  if (args == "follow")
+  String *argVals = getArgs(args);
+
+  if (argVals[0] == "follow")
   {
     // Run follow the leader demo
+    // Can be run with adjustable delays to test without recompiling
+    overrideDelay = argVals[1].toInt();
     followTheLeader();
   }
 
@@ -107,10 +114,20 @@ int switchSwarmMode(String args)
     if (args == "rc")
     {
       mode = RC_MODE;
+
+      pinMode(leftReverse, OUTPUT);
+      pinMode(leftForward, OUTPUT);
+      pinMode(rightForward, OUTPUT);
+      pinMode(rightReverse, OUTPUT);
     }
     else if (args == "demo")
     {
       mode = DEMO_MODE;
+
+      pinMode(leftReverse, OUTPUT);
+      pinMode(leftForward, OUTPUT);
+      pinMode(rightForward, OUTPUT);
+      pinMode(rightReverse, OUTPUT);
     }
 
     Particle.publish("swarm-mode", mode == 1 ? "RC Mode" : "Demo Mode");
@@ -151,18 +168,19 @@ void checkPin(int pin, int32_t *lastVal, const char *event)
 
 void followTheLeader()
 {
-  // Move forward, and accelerate at the end
-  //moveForward(DRIVE_VAL, 600);
-  //moveForward(MAX_VAL, 300);
-  //motorsOff(1000);
+  //Move forward, and accelerate at the end
+  moveForward(DRIVE_VAL, 600);
+  moveForward(MAX_VAL, 400);
+  motorsOff(1000);
 
-  // move back to start
-  //moveBack(DRIVE_VAL, 1200);
-  //motorsOff(1000);
+  //Move back to start
+  moveBack(DRIVE_VAL, 1200);
+  motorsOff(1000);
 
-  turnWideRightReverse();
-  //turnTightRightReverse();
+  turnRight90();
+  motorsOff(500);
 
+  turnLeft90();
   motorsOff(10);
 }
 
@@ -179,6 +197,9 @@ void moveForward(int32_t val, int32_t del)
   Mesh.publish("leftF", String(val));
   Mesh.publish("rightF", String(val));
 
+  analogWrite(leftForward, val);
+  analogWrite(rightForward, val);
+
   delay(del);
 }
 
@@ -187,22 +208,32 @@ void moveBack(int32_t val, int32_t del)
   Mesh.publish("leftR", String(val));
   Mesh.publish("rightR", String(val));
 
+  analogWrite(leftReverse, val);
+  analogWrite(rightReverse, val);
+
   delay(del);
 }
 
-void turnWideRightReverse()
-{
-  Mesh.publish("leftR", String(255));
-
-  delay(WIDE_TURN_DELAY);
-}
-
-void turnTightRightReverse()
+void turnRight90()
 {
   Mesh.publish("leftR", String(255));
   Mesh.publish("rightF", String(255));
 
-  delay(TIGHT_TURN_DELAY);
+  analogWrite(leftReverse, 255);
+  analogWrite(rightForward, 255);
+
+  delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+}
+
+void turnLeft90()
+{
+  Mesh.publish("rightR", String(255));
+  Mesh.publish("leftF", String(255));
+
+  analogWrite(rightReverse, 255);
+  analogWrite(leftForward, 255);
+
+  delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
 }
 
 void allOff()
@@ -211,4 +242,23 @@ void allOff()
   analogWrite(leftForward, 0);
   analogWrite(rightReverse, 0);
   analogWrite(rightForward, 0);
+}
+
+// Utility function to split a Particle function args string into component parts
+String *getArgs(String args)
+{
+  String *vals = new String[2];
+  int separatorIndex = args.indexOf(",");
+
+  if (separatorIndex == -1)
+  {
+    vals[0] = args;
+  }
+  else
+  {
+    vals[0] = args.substring(0, separatorIndex);
+    vals[1] = args.substring(separatorIndex + 1);
+  }
+
+  return vals;
 }
