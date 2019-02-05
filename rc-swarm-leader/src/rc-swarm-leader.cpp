@@ -25,10 +25,12 @@ int swarmDemo(String args);
 int switchSwarmMode(String args);
 void followTheLeader();
 void spinCars();
+void sentry();
 void moveForward(int32_t val, int32_t del);
+void moveForward(int32_t val, int32_t del, int32_t offDel);
 void moveBack(int32_t val, int32_t del);
-void turnRight90();
-void turnLeft90();
+void turnRight90(int32_t offDel);
+void turnLeft90(int32_t offDel);
 void spinLeft360();
 void spinRight360();
 void motorsOff(int32_t del);
@@ -56,7 +58,7 @@ const int32_t DEMO_MODE = 2;
 
 #define WIDE_TURN_DELAY 1650
 #define TIGHT_TURN_DELAY 450
-#define SPIN_DELAY 500
+#define SPIN_DELAY 400
 
 String version = "v1.2";
 int32_t mode = RC_MODE;
@@ -68,7 +70,6 @@ void setup()
 {
   Serial.begin(9600);
 
-  // Need to switch this depending on whether we are in RC or Demo Mode
   pinMode(leftReverse, INPUT);
   pinMode(leftForward, INPUT);
   pinMode(rightForward, INPUT);
@@ -114,6 +115,10 @@ int swarmDemo(String args)
   else if (argVals[0] == "spin")
   {
     spinCars();
+  }
+  else if (argVals[0] == "sentry")
+  {
+    sentry();
   }
 
   return 1;
@@ -167,17 +172,28 @@ void followTheLeader()
   moveBack(DRIVE_VAL, 800);
   motorsOff(1000);
 
-  turnRight90();
-  motorsOff(500);
-
-  turnLeft90();
-  motorsOff(10);
+  turnRight90(500);
+  turnLeft90(10);
 }
 
 void spinCars()
 {
   spinLeft360();
-  motorsOff(500);
+  motorsOff(200);
+
+  spinRight360();
+  motorsOff(200);
+}
+
+void sentry()
+{
+  //for (size_t i = 0; i < 4; i++)
+  //{
+  // move forward 1 sec
+  moveForward(100, 1000, 100);
+  // turn left
+  turnLeft90(100);
+  //} // repeat
 }
 
 /* PRIMITIVES */
@@ -193,6 +209,19 @@ void moveForward(int32_t val, int32_t del)
   delay(del);
 }
 
+void moveForward(int32_t val, int32_t del, int32_t offDel)
+{
+  Mesh.publish("leftF", String(val));
+  Mesh.publish("rightF", String(val));
+
+  analogWrite(leftForward, val);
+  analogWrite(rightForward, val);
+
+  delay(del);
+
+  motorsOff(offDel);
+}
+
 void moveBack(int32_t val, int32_t del)
 {
   Mesh.publish("leftR", String(val));
@@ -204,7 +233,7 @@ void moveBack(int32_t val, int32_t del)
   delay(del);
 }
 
-void turnRight90()
+void turnRight90(int32_t offDel)
 {
   Mesh.publish("leftR", String(255));
   Mesh.publish("rightF", String(255));
@@ -213,9 +242,11 @@ void turnRight90()
   analogWrite(rightForward, 255);
 
   delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+
+  motorsOff(offDel);
 }
 
-void turnLeft90()
+void turnLeft90(int32_t offDel)
 {
   Mesh.publish("rightR", String(255));
   Mesh.publish("leftF", String(255));
@@ -224,18 +255,37 @@ void turnLeft90()
   analogWrite(leftForward, 255);
 
   delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+
+  motorsOff(offDel);
 }
 
 void spinLeft360()
 {
+  moveForward(255, 400);
+  motorsOff(200);
+
   Mesh.publish("leftR", String(255));
+  Mesh.publish("rightF", String(255));
 
   analogWrite(leftReverse, 255);
+  analogWrite(rightForward, 255);
 
   delay(overrideDelay ? overrideDelay : SPIN_DELAY);
 }
 
-void spinRight360() {}
+void spinRight360()
+{
+  moveForward(255, 400);
+  motorsOff(200);
+
+  Mesh.publish("leftF", String(255));
+  Mesh.publish("rightR", String(255));
+
+  analogWrite(leftForward, 255);
+  analogWrite(rightReverse, 255);
+
+  delay(overrideDelay ? overrideDelay : SPIN_DELAY);
+}
 
 void motorsOff(int32_t del)
 {

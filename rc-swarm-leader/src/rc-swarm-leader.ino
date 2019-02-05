@@ -36,7 +36,7 @@ const int32_t DEMO_MODE = 2;
 #define MAX_VAL 200
 
 #define WIDE_TURN_DELAY 1650
-#define TIGHT_TURN_DELAY 450
+#define TIGHT_TURN_DELAY 585
 #define SPIN_DELAY 400
 
 String version = "v1.2";
@@ -95,6 +95,10 @@ int swarmDemo(String args)
   {
     spinCars();
   }
+  else if (argVals[0] == "sentry")
+  {
+    sentry();
+  }
 
   return 1;
 }
@@ -147,11 +151,8 @@ void followTheLeader()
   moveBack(DRIVE_VAL, 800);
   motorsOff(1000);
 
-  turnRight90();
-  motorsOff(500);
-
-  turnLeft90();
-  motorsOff(10);
+  turnRight90(500);
+  turnLeft90(10);
 }
 
 void spinCars()
@@ -161,6 +162,17 @@ void spinCars()
 
   spinRight360();
   motorsOff(200);
+}
+
+void sentry()
+{
+  for (size_t i = 0; i < 4; i++)
+  {
+    // move forward 1 sec
+    moveForward(100, 700, 100);
+    // turn left
+    turnLeft90(100);
+  } // repeat
 }
 
 /* PRIMITIVES */
@@ -176,6 +188,19 @@ void moveForward(int32_t val, int32_t del)
   delay(del);
 }
 
+void moveForward(int32_t val, int32_t del, int32_t offDel)
+{
+  Mesh.publish("leftF", String(val));
+  Mesh.publish("rightF", String(val));
+
+  analogWrite(leftForward, val);
+  analogWrite(rightForward, val);
+
+  delay(del);
+
+  motorsOff(offDel);
+}
+
 void moveBack(int32_t val, int32_t del)
 {
   Mesh.publish("leftR", String(val));
@@ -187,7 +212,7 @@ void moveBack(int32_t val, int32_t del)
   delay(del);
 }
 
-void turnRight90()
+void turnLeft90(int32_t offDel)
 {
   Mesh.publish("leftR", String(255));
   Mesh.publish("rightF", String(255));
@@ -196,9 +221,11 @@ void turnRight90()
   analogWrite(rightForward, 255);
 
   delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+
+  motorsOff(offDel);
 }
 
-void turnLeft90()
+void turnRight90(int32_t offDel)
 {
   Mesh.publish("rightR", String(255));
   Mesh.publish("leftF", String(255));
@@ -207,6 +234,8 @@ void turnLeft90()
   analogWrite(leftForward, 255);
 
   delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+
+  motorsOff(offDel);
 }
 
 void spinLeft360()
