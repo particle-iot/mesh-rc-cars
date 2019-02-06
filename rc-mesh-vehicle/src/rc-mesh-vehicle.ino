@@ -22,12 +22,14 @@ int rightForward = A2;
 int rightReverse = A3;
 
 // Speed and delay variables
+#define SPIN_DELAY 400
+
 int speed = 85;
 int turnSpeed = 255;
 int forwardDelay = 1000;
 int backDelay = 1000;
 int turnDelay = 2000;
-String version = "v0.8";
+String version = "v1.2";
 
 void setup()
 {
@@ -54,6 +56,23 @@ void stopDemo(const char *event, const char *data)
 
 void runDemo(const char *event, const char *data)
 {
+  if (strcmp(data, "basic") == true)
+  {
+    // Run follow the leader demo
+    basicDemo();
+  }
+  else if (strcmp(data, "spin") == true)
+  {
+    spinDemo();
+  }
+  else if (strcmp(data, "sentry") == true)
+  {
+    sentryDemo();
+  }
+}
+
+void basicDemo()
+{
   allOff();
 
   goForward(speed);
@@ -66,6 +85,19 @@ void runDemo(const char *event, const char *data)
   turnLeft(turnSpeed);
   delay(turnDelay);
 
+  allOff();
+}
+
+void sentryDemo()
+{
+}
+
+void spinDemo()
+{
+  spinLeft360();
+  allOff();
+
+  spinRight360();
   allOff();
 }
 
@@ -107,6 +139,34 @@ void turnRight(int speed)
   allOff();
 
   analogWrite(leftForward, speed);
+}
+
+void spinLeft360()
+{
+  goForward(255);
+  delay(400);
+  allOff();
+
+  delay(150);
+
+  analogWrite(leftReverse, 255);
+  analogWrite(rightForward, 255);
+
+  delay(SPIN_DELAY);
+}
+
+void spinRight360()
+{
+  goForward(255);
+  delay(400);
+  allOff();
+
+  delay(150);
+
+  analogWrite(leftForward, 255);
+  analogWrite(rightReverse, 255);
+
+  delay(SPIN_DELAY);
 }
 
 void loop()

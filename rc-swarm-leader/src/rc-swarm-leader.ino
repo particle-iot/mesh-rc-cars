@@ -32,12 +32,16 @@ const int32_t DEMO_MODE = 2;
 
 #define MIN_PIN_VAL 150
 #define DRIVE_VAL 125
-#define SENTRY_VAL 90
 #define MAX_VAL 200
 
 #define WIDE_TURN_DELAY 1650
 #define TIGHT_TURN_DELAY 585
 #define SPIN_DELAY 400
+
+// Sentry mode
+#define SENTRY_MODE_DELAY 700
+#define SENTRY_MODE_SPEED 100
+bool sentryModeEnabled = false;
 
 String version = "v1.2";
 int32_t mode = RC_MODE;
@@ -61,6 +65,7 @@ void setup()
 
   Particle.function("switchMode", switchSwarmMode);
   Particle.function("swarmDemo", swarmDemo);
+  Particle.function("stopDemos", stopDemos);
 }
 
 void loop()
@@ -139,17 +144,20 @@ int switchSwarmMode(String args)
   return 1;
 }
 
+int stopDemos(String args)
+{
+  sentryModeEnabled = false;
+}
+
 /* SEQUENCES */
 
 void followTheLeader()
 {
   //Move forward,
-  moveForward(DRIVE_VAL, 800);
-  motorsOff(1000);
+  moveForward(DRIVE_VAL, 800, 100);
 
   //Move back to start
-  moveBack(DRIVE_VAL, 800);
-  motorsOff(1000);
+  moveBack(DRIVE_VAL, 800, 1000);
 
   turnRight90(500);
   turnLeft90(10);
@@ -169,24 +177,14 @@ void sentry()
   for (size_t i = 0; i < 4; i++)
   {
     // move forward 1 sec
-    moveForward(100, 700, 100);
+    moveForward(SENTRY_MODE_SPEED, SENTRY_MODE_DELAY, 100);
+
     // turn left
     turnLeft90(100);
   } // repeat
 }
 
 /* PRIMITIVES */
-
-void moveForward(int32_t val, int32_t del)
-{
-  Mesh.publish("leftF", String(val));
-  Mesh.publish("rightF", String(val));
-
-  analogWrite(leftForward, val);
-  analogWrite(rightForward, val);
-
-  delay(del);
-}
 
 void moveForward(int32_t val, int32_t del, int32_t offDel)
 {
@@ -201,7 +199,7 @@ void moveForward(int32_t val, int32_t del, int32_t offDel)
   motorsOff(offDel);
 }
 
-void moveBack(int32_t val, int32_t del)
+void moveBack(int32_t val, int32_t del, int32_t offDel)
 {
   Mesh.publish("leftR", String(val));
   Mesh.publish("rightR", String(val));
@@ -210,6 +208,8 @@ void moveBack(int32_t val, int32_t del)
   analogWrite(rightReverse, val);
 
   delay(del);
+
+  motorsOff(offDel);
 }
 
 void turnLeft90(int32_t offDel)
@@ -240,8 +240,7 @@ void turnRight90(int32_t offDel)
 
 void spinLeft360()
 {
-  moveForward(255, 400);
-  motorsOff(200);
+  moveForward(255, 400, 200);
 
   Mesh.publish("leftR", String(255));
   Mesh.publish("rightF", String(255));
@@ -254,8 +253,7 @@ void spinLeft360()
 
 void spinRight360()
 {
-  moveForward(255, 400);
-  motorsOff(200);
+  moveForward(255, 400, 200);
 
   Mesh.publish("leftF", String(255));
   Mesh.publish("rightR", String(255));
