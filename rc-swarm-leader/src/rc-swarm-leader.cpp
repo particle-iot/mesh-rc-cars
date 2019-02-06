@@ -23,13 +23,17 @@ void setup();
 void loop();
 int swarmDemo(String args);
 int switchSwarmMode(String args);
+int stopDemos(String args);
 void followTheLeader();
 void spinCars();
 void sentry();
+void splinter();
 void moveForward(int32_t val, int32_t del, int32_t offDel);
 void moveBack(int32_t val, int32_t del, int32_t offDel);
 void turnLeft90(int32_t offDel);
 void turnRight90(int32_t offDel);
+void turnLeft135(int32_t offDel);
+void turnRight135(int32_t offDel);
 void spinLeft360();
 void spinRight360();
 void motorsOff(int32_t del);
@@ -52,16 +56,21 @@ const int32_t DEMO_MODE = 2;
 
 #define MIN_PIN_VAL 150
 #define DRIVE_VAL 125
-#define SENTRY_VAL 90
 #define MAX_VAL 200
 
 #define WIDE_TURN_DELAY 1650
-#define TIGHT_TURN_DELAY 585
+#define NINETY_DEG_TURN_DELAY 585
+#define ONE_THIRTY_FIVE_DEG_TURN_DELAY 878
 #define SPIN_DELAY 400
 
 // Sentry mode
 #define SENTRY_MODE_DELAY 700
 #define SENTRY_MODE_SPEED 100
+bool sentryModeEnabled = false;
+
+// Splinter mode
+#define SPLINTER_MODE_SPEED 255
+#define SPLINTER_MODE_DELAY 2000
 
 String version = "v1.2";
 int32_t mode = RC_MODE;
@@ -85,6 +94,7 @@ void setup()
 
   Particle.function("switchMode", switchSwarmMode);
   Particle.function("swarmDemo", swarmDemo);
+  Particle.function("stopDemos", stopDemos);
 }
 
 void loop()
@@ -122,6 +132,10 @@ int swarmDemo(String args)
   else if (argVals[0] == "sentry")
   {
     sentry();
+  }
+  else if (argVals[0] == "splinter")
+  {
+    splinter();
   }
 
   return 1;
@@ -163,6 +177,11 @@ int switchSwarmMode(String args)
   return 1;
 }
 
+int stopDemos(String args)
+{
+  sentryModeEnabled = false;
+}
+
 /* SEQUENCES */
 
 void followTheLeader()
@@ -196,6 +215,18 @@ void sentry()
     // turn left
     turnLeft90(100);
   } // repeat
+}
+
+void splinter()
+{
+  // Turn 135 Left
+  turnLeft135(200);
+  // Drive forward for 2 seconds
+  moveForward(SPLINTER_MODE_SPEED, SPLINTER_MODE_DELAY, 200);
+  // Turn 135 right
+  turnRight135(200);
+  // Drive forward for 2 sec
+  moveForward(SPLINTER_MODE_SPEED, SPLINTER_MODE_DELAY, 200);
 }
 
 /* PRIMITIVES */
@@ -234,7 +265,7 @@ void turnLeft90(int32_t offDel)
   analogWrite(leftReverse, 255);
   analogWrite(rightForward, 255);
 
-  delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+  delay(overrideDelay ? overrideDelay : NINETY_DEG_TURN_DELAY);
 
   motorsOff(offDel);
 }
@@ -247,7 +278,33 @@ void turnRight90(int32_t offDel)
   analogWrite(rightReverse, 255);
   analogWrite(leftForward, 255);
 
-  delay(overrideDelay ? overrideDelay : TIGHT_TURN_DELAY);
+  delay(overrideDelay ? overrideDelay : NINETY_DEG_TURN_DELAY);
+
+  motorsOff(offDel);
+}
+
+void turnLeft135(int32_t offDel)
+{
+  Mesh.publish("leftR", String(255));
+  Mesh.publish("rightF", String(255));
+
+  analogWrite(leftReverse, 255);
+  analogWrite(rightForward, 255);
+
+  delay(overrideDelay ? overrideDelay : ONE_THIRTY_FIVE_DEG_TURN_DELAY);
+
+  motorsOff(offDel);
+}
+
+void turnRight135(int32_t offDel)
+{
+  Mesh.publish("rightR", String(255));
+  Mesh.publish("leftF", String(255));
+
+  analogWrite(rightReverse, 255);
+  analogWrite(leftForward, 255);
+
+  delay(overrideDelay ? overrideDelay : ONE_THIRTY_FIVE_DEG_TURN_DELAY);
 
   motorsOff(offDel);
 }
