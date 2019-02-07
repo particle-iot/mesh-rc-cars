@@ -24,10 +24,10 @@ Firmware for mesh-networked RC cars. Includes standalone projects for the follow
   - ✅ Function to trigger swarm demos
     - ✅ Follow the leader - basic forward and back demo with ending spin
     - ️✅ Splinter - cars separate in three different directions and come back together
-    - ☑️ Follow the leader and push - Leader car tells followers to stop, goes forward 2 seconds, turns around, goes back 2 seconds, then tells followers to move backwards as it keeps moving forward.
+    - ✅ Follow the leader and push - Leader car tells followers to stop, goes forward 2 seconds, turns around, goes back 2 seconds, then tells followers to move backwards as it keeps moving forward.
     - ✅ Sentry mode - Square with right-angle turns
-    - ☑️ Orbit - follower cars orbit a stationary leader car
-  - ☑️ Demo "primitives" that encapsulate car movements
+    - ✅ Orbit - follower cars orbit a stationary leader car
+  - ✅ Demo "primitives" that encapsulate car movements
     - Basic (`forward`, `back`, `circle`)
     - Turns (`turnRight45`, `turnRight90`, etc.)
     - Spins (`spin360Left`, `spin360Right`)

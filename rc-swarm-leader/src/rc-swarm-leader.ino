@@ -48,7 +48,13 @@ bool sentryModeEnabled = false;
 #define SPLINTER_MODE_SPEED 255
 #define SPLINTER_MODE_DELAY 2000
 
-String version = "v1.2";
+// Push mode
+#define PUSH_MODE_DELAY 1000
+
+// Orbin Mode
+#define ORBIT_VAL 100
+
+String version = "v1.3";
 int32_t mode = RC_MODE;
 int32_t overrideDelay = 0;
 
@@ -112,6 +118,14 @@ int swarmDemo(String args)
   else if (argVals[0] == "splinter")
   {
     splinter();
+  }
+  else if (argVals[0] == "push")
+  {
+    followAndPush();
+  }
+  else if (argVals[0] == "orbit")
+  {
+    orbit();
   }
 
   return 1;
@@ -203,6 +217,51 @@ void splinter()
   turnRight135(200);
   // Drive forward for 2 sec
   moveForward(SPLINTER_MODE_SPEED, SPLINTER_MODE_DELAY, 200);
+}
+
+void followAndPush()
+{
+  // follow the leader for one sec and stop
+  moveForward(DRIVE_VAL, 1000, 200);
+
+  // leader car moves forward for one sec
+  analogWrite(leftForward, DRIVE_VAL);
+  analogWrite(rightForward, DRIVE_VAL);
+
+  delay(1000);
+
+  // leader car turns 180
+  turnLeft90(0);
+  turnLeft90(200);
+
+  // leader car moves back one sec
+  analogWrite(leftForward, DRIVE_VAL);
+  analogWrite(rightForward, DRIVE_VAL);
+
+  delay(1000);
+
+  // leader car continues to move forward, follower cars move backwards
+  Mesh.publish("leftR", String(DRIVE_VAL));
+  Mesh.publish("rightR", String(DRIVE_VAL));
+
+  delay(1000);
+
+  // Stop all cars
+  motorsOff(200);
+}
+
+void orbit()
+{
+  // leader car spins 360 slowly over and over
+  analogWrite(leftReverse, 255);
+  analogWrite(rightForward, 255);
+
+  // follower cars orbit around the leader
+  Mesh.publish("leftF", String(ORBIT_VAL));
+
+  delay(5000);
+
+  motorsOff(20);
 }
 
 /* PRIMITIVES */
