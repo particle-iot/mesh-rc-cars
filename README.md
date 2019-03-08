@@ -32,17 +32,32 @@ Firmware for mesh-networked RC cars. Includes standalone projects for the follow
     - Turns (`turnRight45`, `turnRight90`, etc.)
     - Spins (`spin360Left`, `spin360Right`)
 
-### 4. [Coming soon] Swarm sequence with collision-detection
+## A few ideas for how this project could be extended
+
+*AKA send us a PR!*
+
+### 4. Swarm sequence with collision-detection
 
 - Leader fitted with ultrasonic distance sensor. Moves forward until it sees an obstacle, then moves back and turns around.
 - Emits mesh commands to followers to do the same
 
-### 5. [Coming soon] Swarm-based mesh range testing
+### 5. Swarm-based mesh range testing
 
 - All networked vehicles drive away from the gateway until their network signal strength falls below a threshold.
 - `Gather` command summons all vehicles back until the network signal goes above a threshold.
 
-### 6. [Coming soon] Swarm sequence "mapping" with RC remote
+### 6. Swarm sequence "mapping" with RC remote
 
 - Modification of #2 that logs each swarm movement from the remote control.
 - Can be used to program sequences (manually or automatically)
+
+## Instructions for building and flashing the firmware
+
+*You should already have a mesh network with at least one Gateway (Argon or Boron) and one or more Xenons for this project. The Gateway can be attached to a car in the swarm, or separate with Xenons on every RC car in the swarm.*
+
+1. Clone this repo
+2. Open the `rc-mesh.code-workspace` in VS Code (If you don't have the Particle Workbench extension for VS Code, [install it!](https://marketplace.visualstudio.com/items?itemName=particle.particle-vscode-pack))
+3. For local compilation and flashing, install a local compiler for 3rd generation devices (Xenon, Argon, Boron) using the "Particle: Install Local Compiler" command in the VS Code command palette. 
+4. To flash a swarm leader, run the "Particle: Configure Workspace for Device" command and follow the prompts, selecting the `rc-sawarm-leader` project, then run either the "Particle: Cloud Flash" or "Particle: Flash application (local)" command.
+5. Repeat this project for each swarm follower, choosing the swarm `rc-swarm-follower` project".
+6. Once all the devices are flashed, run the demos using functions in the [Particle Console](https://console.particle.io)

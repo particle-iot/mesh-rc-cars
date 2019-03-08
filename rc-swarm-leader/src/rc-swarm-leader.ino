@@ -46,7 +46,7 @@ bool sentryModeEnabled = false;
 
 // Splinter mode
 #define SPLINTER_MODE_SPEED 255
-#define SPLINTER_MODE_DELAY 2000
+#define SPLINTER_MODE_DELAY 5000
 
 // Push mode
 #define PUSH_MODE_DELAY 1000
@@ -54,7 +54,7 @@ bool sentryModeEnabled = false;
 // Orbin Mode
 #define ORBIT_VAL 100
 
-String version = "v1.3";
+String version = "v1.4";
 int32_t mode = RC_MODE;
 int32_t overrideDelay = 0;
 
@@ -221,14 +221,14 @@ void splinter()
 
 void followAndPush()
 {
-  // follow the leader for one sec and stop
-  moveForward(DRIVE_VAL, 1000, 200);
+  // follow the leader for five sec and stop
+  moveForward(DRIVE_VAL, 5000, 200);
 
   // leader car moves forward for one sec
   analogWrite(leftForward, DRIVE_VAL);
   analogWrite(rightForward, DRIVE_VAL);
 
-  delay(1000);
+  delay(5000);
 
   // leader car turns 180
   turnLeft90(0);
@@ -238,13 +238,13 @@ void followAndPush()
   analogWrite(leftForward, DRIVE_VAL);
   analogWrite(rightForward, DRIVE_VAL);
 
-  delay(1000);
+  delay(5000);
 
   // leader car continues to move forward, follower cars move backwards
   Mesh.publish("leftR", String(DRIVE_VAL));
   Mesh.publish("rightR", String(DRIVE_VAL));
 
-  delay(1000);
+  delay(5000);
 
   // Stop all cars
   motorsOff(200);
